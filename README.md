@@ -7,6 +7,13 @@ A modern, feature-rich appointment booking system built with React Native and Ex
 ![Expo](https://img.shields.io/badge/Expo-~54.0-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-~5.9.2-blue)
 
+
+## Image and demo of the app here
+![Home Screen]([https://drive.google.com/uc?export=view&id=FILE_ID](https://drive.google.com/file/d/1JgtMoLXSPK27VBM00VZfBo0UNp4ujOMY/view?usp=drive_link))
+![Home Screen]([https://drive.google.com/uc?export=view&id=FILE_ID](https://drive.google.com/file/d/1yLOtOHu1KctbG5fe-3J7mVg19Ep43gZE/view?usp=drive_link))
+![Home Screen](https://drive.google.com/file/d/1uaReHnXxgDsA-0_AArTP1oq4MFtmhU7T/view?usp=drive_link)
+![Home Screen](https://drive.google.com/file/d/1zQjvfQSQXJ6cDQRTUFRwozsgEyK6PTCe/view?usp=drive_link)
+![Home Screen](https://drive.google.com/file/d/1uLrsvaksgoVW_TnLI8htXpXikB3JkFb9/view?usp=drive_link)
 ## ✨ Features
 
 ### Functional Requirements ✅
