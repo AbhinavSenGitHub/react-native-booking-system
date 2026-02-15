@@ -16,15 +16,11 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
 }) => {
     const colorScheme = useColorScheme();
     const colors = colorScheme === 'dark' ? Colors.dark : Colors.light;
+    const isDark = colorScheme === 'dark';
 
     return (
         <View style={styles.container}>
-            <Text style={[styles.title, { color: colors.text }]}>Select Time Slot</Text>
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.slotsContainer}
-            >
+            <View style={styles.grid}>
                 {timeSlots.map((slot) => {
                     const isSelected = selectedSlot === slot.time;
                     const isDisabled = !slot.available;
@@ -36,12 +32,11 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
                                 styles.slotButton,
                                 {
                                     backgroundColor: isSelected
-                                        ? colors.primary
-                                        : isDisabled
-                                            ? colors.disabled + '40'
-                                            : colors.card,
-                                    borderColor: isSelected ? colors.primary : colors.border,
+                                        ? '#6366F1'
+                                        : colors.card,
+                                    borderColor: isSelected ? '#6366F1' : (isDark ? '#374151' : '#F3F4F6'),
                                 },
+                                isDisabled && [styles.disabledButton, { backgroundColor: isDark ? '#111827' : '#F3F4F6' }]
                             ]}
                             onPress={() => onSelectSlot(slot.time)}
                             disabled={isDisabled}
@@ -53,54 +48,48 @@ export const TimeSlotPicker: React.FC<TimeSlotPickerProps> = ({
                                     {
                                         color: isSelected
                                             ? '#FFFFFF'
-                                            : isDisabled
-                                                ? colors.disabled
-                                                : colors.text,
-                                        fontWeight: isSelected ? '700' : '600',
+                                            : colors.text,
+                                        fontWeight: isSelected ? '800' : '600',
                                     },
+                                    isDisabled && styles.disabledText
                                 ]}
                             >
-                                {slot.time}
+                                {slot.time} {slot.time.split(':')[0] >= '12' ? 'pm' : 'am'}
                             </Text>
-                            {!slot.available && (
-                                <Text style={[styles.unavailableText, { color: colors.textSecondary }]}>
-                                    Booked
-                                </Text>
-                            )}
                         </TouchableOpacity>
                     );
                 })}
-            </ScrollView>
+            </View>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: {
-        marginBottom: Spacing.lg,
+        marginBottom: 20,
     },
-    title: {
-        fontSize: 18,
-        fontWeight: '700',
-        marginBottom: Spacing.md,
-    },
-    slotsContainer: {
-        gap: Spacing.sm,
-        paddingVertical: Spacing.xs,
+    grid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
     },
     slotButton: {
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm + 2,
-        borderRadius: BorderRadius.md,
-        borderWidth: 2,
-        minWidth: 90,
+        flexBasis: '30%',
+        flexGrow: 1,
+        height: 50,
+        borderRadius: 15,
+        borderWidth: 1,
+        justifyContent: 'center',
         alignItems: 'center',
     },
-    slotText: {
-        fontSize: 16,
+    disabledButton: {
+        opacity: 0.3,
+        backgroundColor: '#F3F4F6',
     },
-    unavailableText: {
-        fontSize: 10,
-        marginTop: 2,
+    slotText: {
+        fontSize: 14,
+    },
+    disabledText: {
+        color: '#9CA3AF',
     },
 });

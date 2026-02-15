@@ -1,19 +1,38 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Alert } from 'react-native';
-import { Appointment } from '@/data/mockData';
+import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, Alert, Image } from 'react-native';
 import { Colors, Spacing, BorderRadius, Shadows } from '@/constants/theme';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { Ionicons } from '@expo/vector-icons';
+
+interface Appointment {
+    id: string;
+    serviceName: string;
+    doctorName?: string;
+    patientName?: string;
+    date: string;
+    timeSlot: string;
+    price?: number;
+    duration?: string;
+    status: 'booked' | 'accepted' | 'rejected' | 'completed';
+    serviceImageUrl?: string;
+    doctor?: { _id: string; name: string };
+    patient?: { _id: string; name: string };
+}
 
 interface AppointmentCardProps {
     appointment: Appointment;
-    onCancel: (id: string) => void;
+    onCancel?: (id: string) => void;
+    onReview?: (id: string) => void;
+    onReschedule?: (appointment: Appointment) => void;
 }
 
-export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onCancel }) => {
+export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onCancel, onReview, onReschedule }) => {
     const colorScheme = useColorScheme();
     const colors = colorScheme === 'dark' ? Colors.dark : Colors.light;
+    const isDark = colorScheme === 'dark';
 
     const handleCancel = () => {
+        if (!onCancel) return;
         Alert.alert(
             'Cancel Appointment',
             'Are you sure you want to cancel this appointment?',
@@ -29,23 +48,29 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, o
     };
 
     const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', {
-            weekday: 'short',
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-        });
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('en-US', {
+                weekday: 'short',
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+        } catch (e) {
+            return dateStr;
+        }
     };
 
     const getStatusColor = () => {
         switch (appointment.status) {
-            case 'confirmed':
+            case 'accepted':
                 return colors.success;
-            case 'pending':
+            case 'booked':
                 return colors.warning;
-            case 'cancelled':
+            case 'rejected':
                 return colors.error;
+            case 'completed':
+                return '#2196F3';
             default:
                 return colors.textSecondary;
         }
@@ -53,12 +78,14 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, o
 
     const getStatusIcon = () => {
         switch (appointment.status) {
-            case 'confirmed':
+            case 'accepted':
                 return 'checkmark.circle.fill';
-            case 'pending':
+            case 'booked':
                 return 'clock.fill';
-            case 'cancelled':
+            case 'rejected':
                 return 'xmark.circle.fill';
+            case 'completed':
+                return 'checkmark.seal.fill';
             default:
                 return 'circle.fill';
         }
@@ -68,55 +95,76 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, o
         <View
             style={[
                 styles.container,
-                { backgroundColor: colors.card, borderColor: colors.border },
-                Shadows.sm,
+                { backgroundColor: colors.card },
+                Shadows.md,
             ]}
         >
             <View style={styles.header}>
                 <View style={styles.titleContainer}>
-                    <Text style={[styles.serviceName, { color: colors.text }]} numberOfLines={1}>
-                        {appointment.serviceName}
-                    </Text>
-                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
-                        <IconSymbol name={getStatusIcon()} size={14} color={getStatusColor()} />
+                    <View style={[styles.serviceImageContainer, { backgroundColor: isDark ? '#1F2937' : '#F5F3FF' }]}>
+                        <Image
+                            source={require('../../assets/images/profile_doc.png')}
+                            style={styles.serviceIcon}
+                        />
+                    </View>
+                    <View style={styles.titleWrapper}>
+                        <Text style={[styles.serviceName, { color: colors.text }]} numberOfLines={1}>
+                            {appointment.serviceName}
+                        </Text>
+                        <Text style={[styles.subText, { color: colors.textSecondary }]}>
+                            {appointment.patientName ? `Patient: ${appointment.patientName}` : `Doctor: ${appointment.doctorName}`}
+                        </Text>
+                    </View>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '15' }]}>
                         <Text style={[styles.statusText, { color: getStatusColor() }]}>
-                            {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                            {appointment.status.toUpperCase()}
                         </Text>
                     </View>
                 </View>
             </View>
 
-            <View style={styles.details}>
-                <View style={styles.detailsGrid}>
-                    <View style={styles.detailRow}>
-                        <IconSymbol name="calendar" size={18} color={colors.textSecondary} />
-                        <Text style={[styles.detailText, { color: colors.text }]}>
-                            {formatDate(appointment.date)}
-                        </Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <IconSymbol name="clock" size={18} color={colors.textSecondary} />
-                        <Text style={[styles.detailText, { color: colors.text }]}>{appointment.timeSlot}</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <IconSymbol name="hourglass" size={18} color={colors.textSecondary} />
-                        <Text style={[styles.detailText, { color: colors.text }]}>{appointment.duration} min</Text>
-                    </View>
-                    <View style={styles.detailRow}>
-                        <IconSymbol name="dollarsign.circle" size={18} color={colors.textSecondary} />
-                        <Text style={[styles.detailText, { color: colors.text }]}>${appointment.price}</Text>
-                    </View>
+            <View style={[styles.divider, { backgroundColor: isDark ? '#374151' : '#F3F4F6' }]} />
+
+            <View style={styles.footer}>
+                <View style={styles.infoRow}>
+                    <Ionicons name="calendar-outline" size={16} color="#6366F1" />
+                    <Text style={[styles.infoText, { color: colors.text }]}>
+                        {formatDate(appointment.date)}
+                    </Text>
+                </View>
+                <View style={styles.infoRow}>
+                    <Ionicons name="time-outline" size={16} color="#6366F1" />
+                    <Text style={[styles.infoText, { color: colors.text }]}>{appointment.timeSlot}</Text>
                 </View>
             </View>
 
-            {appointment.status === 'confirmed' && (
+            {appointment.status === 'booked' && (
+                <View style={styles.actionRow}>
+                    {onReschedule && (
+                        <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: isDark ? '#312E81' : '#F5F3FF' }]}
+                            onPress={() => onReschedule(appointment)}
+                        >
+                            <Text style={[styles.actionBtnText, { color: isDark ? '#A5B4FC' : '#6366F1' }]}>Reschedule</Text>
+                        </TouchableOpacity>
+                    )}
+                    {onCancel && (
+                        <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: isDark ? '#7F1D1D' : '#FEF2F2' }]}
+                            onPress={handleCancel}
+                        >
+                            <Text style={[styles.actionBtnText, { color: isDark ? '#FCA5A5' : '#EF4444' }]}>Cancel</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+            )}
+
+            {appointment.status === 'completed' && onReview && (
                 <TouchableOpacity
-                    style={[styles.cancelButton, { backgroundColor: colors.error + '15' }]}
-                    onPress={handleCancel}
-                    activeOpacity={0.7}
+                    style={[styles.reviewBtn, { backgroundColor: '#6366F1' }]}
+                    onPress={() => onReview(appointment.id)}
                 >
-                    <IconSymbol name="xmark.circle" size={18} color={colors.error} />
-                    <Text style={[styles.cancelButtonText, { color: colors.error }]}>Cancel Appointment</Text>
+                    <Text style={styles.reviewBtnText}>Post Review</Text>
                 </TouchableOpacity>
             )}
         </View>
@@ -125,65 +173,97 @@ export const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, o
 
 const styles = StyleSheet.create({
     container: {
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.md,
-        marginBottom: Spacing.md,
-        borderWidth: 1,
+        borderRadius: 24,
+        padding: 16,
+        marginBottom: 16,
+        overflow: 'hidden',
     },
     header: {
-        marginBottom: Spacing.md,
+        marginBottom: 12,
     },
     titleContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        gap: Spacing.sm,
+    },
+    serviceImageContainer: {
+        width: 50,
+        height: 50,
+        borderRadius: 15,
+        backgroundColor: '#F5F3FF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
+        overflow: 'hidden',
+    },
+    serviceIcon: {
+        width: '100%',
+        height: '100%',
+    },
+    titleWrapper: {
+        flex: 1,
     },
     serviceName: {
         fontSize: 18,
-        fontWeight: '700',
-        flex: 1,
+        fontWeight: '800',
+        marginBottom: 2,
     },
-    statusBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: 4,
-        borderRadius: BorderRadius.sm,
-    },
-    statusText: {
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    details: {
-        marginBottom: Spacing.md,
-    },
-    detailsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: Spacing.sm,
-    },
-    detailRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.sm,
-        width: '45%', // Two columns
-    },
-    detailText: {
-        fontSize: 15,
+    subText: {
+        fontSize: 13,
         fontWeight: '500',
     },
-    cancelButton: {
+    statusBadge: {
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 8,
+    },
+    statusText: {
+        fontSize: 10,
+        fontWeight: '800',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#F3F4F6',
+        marginVertical: 12,
+    },
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: Spacing.sm,
-        paddingVertical: Spacing.sm + 2,
-        borderRadius: BorderRadius.md,
+        gap: 6,
     },
-    cancelButtonText: {
-        fontSize: 15,
+    infoText: {
+        fontSize: 14,
         fontWeight: '600',
+    },
+    actionRow: {
+        flexDirection: 'row',
+        gap: 12,
+        marginTop: 15,
+    },
+    actionBtn: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    actionBtnText: {
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    reviewBtn: {
+        marginTop: 15,
+        paddingVertical: 12,
+        borderRadius: 16,
+        alignItems: 'center',
+    },
+    reviewBtnText: {
+        color: '#FFFFFF',
+        fontSize: 14,
+        fontWeight: '700',
     },
 });
